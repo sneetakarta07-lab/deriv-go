@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Redirecting…</title>
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .box{max-width:520px;padding:22px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)}
+    .muted{opacity:.8;font-size:14px;line-height:1.5}
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#22c55e;border-radius:50%;animation:rot 1s linear infinite;vertical-align:-2px;margin-right:8px}
+    @keyframes rot{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="muted"><span class="spin"></span>Redirecting to the platform…</div>
+    <div class="muted" style="margin-top:8px">If nothing happens, allow popups/redirects and refresh.</div>
+  </div>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(window.location.search);
+
+  // ✅ Propeller macros (you pass these in the URL)
+  const zone   = qs.get('z')  || qs.get('zoneid')  || '';
+  const ctry   = qs.get('c')  || qs.get('country') || '';
+  const lang   = qs.get('l')  || qs.get('lang')    || '';
+  const device = qs.get('d')  || qs.get('device')  || '';
+  const os     = qs.get('os') || '';
+  const br     = qs.get('b')  || qs.get('browser') || '';
+
+  // Optional: if some macros are missing, use browser hints (basic)
+  const navLang = (navigator.language || '').slice(0,2);
+  const finalLang = lang || navLang || '';
+
+  // ✅ Your Deriv tracking link base
+  const base = "https://track.deriv.com/_LS7aLe_C7YFnhKTx4PKacmNd7ZgqdRLk/365/";
+
+  // ✅ Fill Deriv sub params (keep short)
+  const sub1 = zone;
+  const sub2 = ctry;
+  const sub3 = finalLang;
+  const sub4 = device;
+  const sub5 = os;
+
+  // ✅ Put extra details in payload (Deriv hit-log/payload report)
+  const payload =
+    "zone=" + encodeURIComponent(zone) +
+    "|country=" + encodeURIComponent(ctry) +
+    "|lang=" + encodeURIComponent(finalLang) +
+    "|device=" + encodeURIComponent(device) +
+    "|os=" + encodeURIComponent(os) +
+    "|browser=" + encodeURIComponent(br);
+
+  const out = new URL(base);
+  out.searchParams.set("sub1", sub1);
+  out.searchParams.set("sub2", sub2);
+  out.searchParams.set("sub3", sub3);
+  out.searchParams.set("sub4", sub4);
+  out.searchParams.set("sub5", sub5);
+  out.searchParams.set("payload", payload);
+
+  // ✅ Small delay helps some networks register click before redirect
+  setTimeout(() => {
+    window.location.replace(out.toString());
+  }, 250);
+})();
+</script>
+</body>
+</html>
