@@ -1,71 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
   <title>Redirecting…</title>
+
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center}
-    .box{max-width:520px;padding:22px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)}
-    .muted{opacity:.8;font-size:14px;line-height:1.5}
-    .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#22c55e;border-radius:50%;animation:rot 1s linear infinite;vertical-align:-2px;margin-right:8px}
-    @keyframes rot{to{transform:rotate(360deg)}}
+    body{margin:0;background:#0b1220;color:#e5e7eb;font-family:Arial,Helvetica,sans-serif}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{max-width:640px;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .title{font-size:18px;font-weight:700;margin:0 0 10px}
+    .muted{opacity:.8;font-size:13px;margin:0 0 14px;line-height:1.5}
+    .bar{height:10px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+    .bar > div{height:100%;width:0%;background:#22c55e;animation:load 0.16s linear forwards}
+    @keyframes load{to{width:100%}}
+    .tiny{margin-top:10px;font-size:12px;opacity:.65}
+    a{color:#38bdf8}
   </style>
 </head>
+
 <body>
-  <div class="box">
-    <div class="muted"><span class="spin"></span>Redirecting to the platform…</div>
-    <div class="muted" style="margin-top:8px">If nothing happens, allow popups/redirects and refresh.</div>
+  <div class="wrap">
+    <div class="card">
+      <p class="title">Redirecting…</p>
+      <p class="muted">Please wait a moment. We are opening the platform.</p>
+      <div class="bar"><div></div></div>
+      <div class="tiny">If it doesn’t open, <a id="manualLink" href="#">click here</a>.</div>
+    </div>
   </div>
 
 <script>
 (function () {
+  // ====== SETTINGS ======
+  // Your Deriv tracking base:
+  const DERIV_BASE = "https://track.deriv.com/_LS7aLe_C7YFnhKTx4PKacmNd7ZgqdRLk/365/";
+
+  // Redirect delay:
+  // 80ms = fast + higher chance click registers on pop/onClick networks
+  const REDIRECT_DELAY_MS = 80;
+
+  // ====== READ PARAMS FROM PROPELLER URL ======
   const qs = new URLSearchParams(window.location.search);
 
-  // ✅ Propeller macros (you pass these in the URL)
-  const zone   = qs.get('z')  || qs.get('zoneid')  || '';
-  const ctry   = qs.get('c')  || qs.get('country') || '';
-  const lang   = qs.get('l')  || qs.get('lang')    || '';
+  // Primary (short) params
+  const zoneid = qs.get('z')  || qs.get('zoneid')  || '';
+  const country= qs.get('c')  || qs.get('country') || '';
+  const lang   = qs.get('l')  || qs.get('language')|| '';
   const device = qs.get('d')  || qs.get('device')  || '';
   const os     = qs.get('os') || '';
-  const br     = qs.get('b')  || qs.get('browser') || '';
+  const browser= qs.get('b')  || qs.get('browser') || '';
 
-  // Optional: if some macros are missing, use browser hints (basic)
-  const navLang = (navigator.language || '').slice(0,2);
-  const finalLang = lang || navLang || '';
+  // Extra (optional but useful)
+  const bv   = qs.get('bv')   || qs.get('browserversion') || '';
+  const ov   = qs.get('ov')   || qs.get('osversion')      || '';
+  const r    = qs.get('r')    || qs.get('region')         || '';
+  const ua   = qs.get('ua')   || qs.get('useragent')      || '';
+  const cid  = qs.get('cid')  || qs.get('campaignid')     || '';
+  const clid = qs.get('clid') || qs.get('clickid')        || '';
+  const ct   = qs.get('ct')   || qs.get('connectiontype') || '';
+  const car  = qs.get('car')  || qs.get('carrier')        || '';
+  const cost = qs.get('cost') || qs.get('cost')           || '';
 
-  // ✅ Your Deriv tracking link base
-  const base = "https://track.deriv.com/_LS7aLe_C7YFnhKTx4PKacmNd7ZgqdRLk/365/";
+  // ====== BUILD DERIV URL ======
+  // sub1..sub5 keep it simple + payload for detailed logging
+  const out = new URL(DERIV_BASE);
 
-  // ✅ Fill Deriv sub params (keep short)
-  const sub1 = zone;
-  const sub2 = ctry;
-  const sub3 = finalLang;
-  const sub4 = device;
-  const sub5 = os;
+  // sub fields (keep most important)
+  out.searchParams.set('sub1', zoneid);   // Zone ID
+  out.searchParams.set('sub2', country);  // Country
+  out.searchParams.set('sub3', lang);     // Language
+  out.searchParams.set('sub4', device);   // Device
+  out.searchParams.set('sub5', os);       // OS
 
-  // ✅ Put extra details in payload (Deriv hit-log/payload report)
+  // payload (extra details in one field)
+  // NOTE: Using | separator like you already do in Deriv hits log
   const payload =
-    "zone=" + encodeURIComponent(zone) +
-    "|country=" + encodeURIComponent(ctry) +
-    "|lang=" + encodeURIComponent(finalLang) +
+    "zone=" + encodeURIComponent(zoneid) +
+    "|country=" + encodeURIComponent(country) +
+    "|lang=" + encodeURIComponent(lang) +
     "|device=" + encodeURIComponent(device) +
     "|os=" + encodeURIComponent(os) +
-    "|browser=" + encodeURIComponent(br);
+    "|browser=" + encodeURIComponent(browser) +
+    "|browserversion=" + encodeURIComponent(bv) +
+    "|osversion=" + encodeURIComponent(ov) +
+    "|region=" + encodeURIComponent(r) +
+    "|campaignid=" + encodeURIComponent(cid) +
+    "|clickid=" + encodeURIComponent(clid) +
+    "|connectiontype=" + encodeURIComponent(ct) +
+    "|carrier=" + encodeURIComponent(car) +
+    "|cost=" + encodeURIComponent(cost);
 
-  const out = new URL(base);
-  out.searchParams.set("sub1", sub1);
-  out.searchParams.set("sub2", sub2);
-  out.searchParams.set("sub3", sub3);
-  out.searchParams.set("sub4", sub4);
-  out.searchParams.set("sub5", sub5);
-  out.searchParams.set("payload", payload);
+  out.searchParams.set('payload', payload);
 
-  // ✅ Small delay helps some networks register click before redirect
-  setTimeout(() => {
+  // Set manual link fallback
+  document.getElementById('manualLink').href = out.toString();
+
+  // ====== FAST REDIRECT ======
+  // use replace (no back button loop)
+  setTimeout(function () {
     window.location.replace(out.toString());
-  }, 80);
+  }, REDIRECT_DELAY_MS);
+
 })();
 </script>
 </body>
